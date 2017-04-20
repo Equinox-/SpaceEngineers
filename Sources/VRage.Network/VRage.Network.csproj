@@ -144,10 +144,6 @@
     <Compile Include="SyncLayer\StateDataAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="RakNet">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\3rd\RakNet\$(Configuration)\$(Platform)\RakNet.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>

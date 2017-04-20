@@ -132,44 +132,45 @@
       <HintPath>$(HavokWrapperFullPath)</HintPath>
     </Reference>
     <Reference Include="InfinarioSDK">
-      <HintPath>..\..\3rd\Infinario\InfinarioSDK.dll</HintPath>
+      <HintPath>..\..\3rd\Infinario\$(Platform)\InfinarioSDK.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.IdentityModel.Logging">
-      <HintPath>..\..\3rd\IdentityModel\Microsoft.IdentityModel.Logging.dll</HintPath>
+    <Reference Include="Microsoft.IdentityModel.Logging, Version=1.1.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.IdentityModel.Logging.1.1.3\lib\net451\Microsoft.IdentityModel.Logging.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.IdentityModel.Tokens, Version=5.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\3rd\IdentityModel\Microsoft.IdentityModel.Tokens.dll</HintPath>
+    <Reference Include="Microsoft.IdentityModel.Tokens, Version=5.1.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.IdentityModel.Tokens.5.1.3\lib\net451\Microsoft.IdentityModel.Tokens.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\3rd\IdentityModel\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="RecastDetourWrapper">
-      <HintPath>..\..\3rd\RecastDetourWrapper\release\x64\RecastDetourWrapper.dll</HintPath>
+      <HintPath>..\..\3rd\RecastDetourWrapper\release\$(Platform)\RecastDetourWrapper.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Desktop">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.Desktop.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.Desktop.dll</HintPath>
     </Reference>
-    <Reference Include="SharpDX.Direct3D11, Version=2.6.3.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SharpDX.Direct3D11">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\3rd\SharpDX\SharpDX.Direct3D11.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.Direct3D11.dll</HintPath>
     </Reference>
-    <Reference Include="SharpDX.DXGI, Version=2.6.3.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SharpDX.DXGI">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\3rd\SharpDX\SharpDX.DXGI.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.DXGI.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Mathematics">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.Mathematics.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.Mathematics.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Toolkit">
-      <HintPath>..\..\3rd\SharpDX.Toolkit\x64\Release\SharpDX.Toolkit.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX.Toolkit\$(Platform)\Release\SharpDX.Toolkit.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.XAudio2">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.XAudio2.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.XAudio2.dll</HintPath>
     </Reference>
     <Reference Include="SteamSDK" Condition="('$(Configuration)' != 'Debug_XB1') And ('$(Configuration)' != 'Release_XB1')">
       <SpecificVersion>False</SpecificVersion>
@@ -187,9 +188,9 @@
     <Reference Include="System.Design" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.IdentityModel" />
-    <Reference Include="System.IdentityModel.Tokens.Jwt, Version=5.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\3rd\IdentityModel\System.IdentityModel.Tokens.Jwt.dll</HintPath>
+    <Reference Include="System.IdentityModel.Tokens.Jwt, Version=5.1.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.IdentityModel.Tokens.Jwt.5.1.3\lib\net451\System.IdentityModel.Tokens.Jwt.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Management" />
     <Reference Include="System.Net.Http" />
@@ -202,7 +203,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="VRage.Native">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\3rd\VRage.Native\release\$(Platform)\VRage.Native.dll</HintPath>
+      <HintPath>..\..\3rd\VRage.Native\$(Configuration)\$(Platform)\VRage.Native.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -1607,6 +1608,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Game\Screens\Terminal\MyTerminalFactionController.cs" />
+    <None Include="app.config" />
     <None Include="Game\Entities\Cube\Blocks.cd" />
     <None Include="Game\Localization\MySpaceTexts.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
@@ -1616,6 +1618,7 @@
       <Link>Game\Localization\MyTexts.resx</Link>
       <SubType>Designer</SubType>
     </None>
+    <None Include="packages.config" />
     <None Include="Resources\cubeblocks.sbc" />
   </ItemGroup>
   <ItemGroup>

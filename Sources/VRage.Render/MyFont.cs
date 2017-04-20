@@ -76,9 +76,14 @@ namespace VRageRender
 
                 if (!MyFileSystem.FileExists(path))
                 {
-                    var message = string.Format("Unable to find font path '{0}'.", path);
-                    Debug.Fail(message);
-                    throw new Exception(message);
+                    // TODO workaround for during an update.  Not "really" good
+                    path = path.Substring(0, path.Length - 4) + "PA.xml";
+                    if (!MyFileSystem.FileExists(path))
+                    {
+                        var message = string.Format("Unable to find font path '{0}'.", path);
+                        Debug.Fail(message);
+                        throw new Exception(message);
+                    }
                 }
 
                 m_fontDirectory = Path.GetDirectoryName(path);

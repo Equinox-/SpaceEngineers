@@ -105,28 +105,28 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="SharpDX">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.D3DCompiler">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.D3DCompiler.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.D3DCompiler.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Direct2D1">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.Direct2D1.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.Direct2D1.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Direct3D11">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.Direct3D11.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.Direct3D11.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Direct3D9">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.Direct3D9.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.Direct3D9.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.DXGI">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.DXGI.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.DXGI.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Mathematics">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.Mathematics.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.Mathematics.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Toolkit">
-      <HintPath>..\..\3rd\SharpDX.Toolkit\x64\Release\SharpDX.Toolkit.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX.Toolkit\$(Platform)\Release\SharpDX.Toolkit.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -571,6 +571,10 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Shaders\Primitives\OcclusionQuery.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

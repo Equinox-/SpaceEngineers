@@ -15,8 +15,9 @@ namespace VRage.Audio
     {
         public static readonly MySoundErrorDelegate OnSoundError = (cue, message) =>
         {
-            MyAudioDefinition definition = MyDefinitionManager.Static.GetSoundDefinition(cue.SubtypeId);
-            MyDefinitionErrors.Add(definition.Context, message, TErrorSeverity.Error);
+            // TODO When running against newer content files Audio Files are a common error.  Just ignore them.
+            // MyAudioDefinition definition = MyDefinitionManager.Static.GetSoundDefinition(cue.SubtypeId);
+            // MyDefinitionErrors.Add(definition.Context, message, TErrorSeverity.Error);
         };
 
         public static MyCueId GetCueId(this IMyAudio self, string cueName)

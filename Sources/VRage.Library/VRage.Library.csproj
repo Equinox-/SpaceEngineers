@@ -110,10 +110,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="SharpDX">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Mathematics">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.Mathematics.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.Mathematics.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />

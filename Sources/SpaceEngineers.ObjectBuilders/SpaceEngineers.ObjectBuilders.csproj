@@ -272,7 +272,9 @@
     <Compile Include="SpaceEngineersObjectBuilders.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="app.config" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VRage.Game\VRage.Game.csproj">
       <Project>{4539b5f0-3316-40e6-b032-9fbcafaac5be}</Project>
@@ -302,17 +304,18 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>"$(ProjectDir)..\..\Build\Tools\SGenAutoResolve\SGenAutoResolve_$(PlatformName).exe" /a:"$(TargetPath)" /d:"$(TargetDir)VRage.Game.dll" /b /v</PostBuildEvent>
+    <!--<PostBuildEvent>"$(ProjectDir)..\..\Build\Tools\SGenAutoResolve\SGenAutoResolve_$(PlatformName).exe" /a:"$(TargetPath)" /d:"$(TargetDir)VRage.Game.dll" /b /v</PostBuildEvent>-->
   </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
-  <Target Name="AfterClean">
-    <Delete Files="$(OutDir)\SpaceEngineers.ObjectBuilders.XmlSerializers.dll" ContinueOnError="true" />
-    <Delete Files="$(OutDir)\SpaceEngineers.ObjectBuilders.XmlSerializers.dll.hash" ContinueOnError="true" />
+  <!-- Custom SGEN Stuff -->
+  <PropertyGroup>
+    <SGenDir Condition="'$(Platform)' == 'x64'">\x64\</SGenDir>
+    <SGenDir Condition="'$(Platform)' == 'x86'">
+    </SGenDir>
+  </PropertyGroup>
+  <Target Name="AfterBuild" DependsOnTargets="AssignTargetPaths;Compile;ResolveKeySource" Inputs="$(MSBuildAllProjects);@(IntermediateAssembly)" Outputs="$(OutputPath)$(_SGenDllName)">
+    <Delete Files="$(TargetDir)$(TargetName).XmlSerializers.dll" ContinueOnError="true" />
+    <SGen BuildAssemblyName="$(TargetFileName)" BuildAssemblyPath="$(OutputPath)" References="@(ReferencePath)" ShouldGenerateSerializer="true" UseProxyTypes="false" ToolPath="$(TargetFrameworkSDKToolsDirectory)$(SGenDir)" Platform="$(Platform)">
+      <Output TaskParameter="SerializationAssembly" ItemName="SerializationAssembly" />
+    </SGen>
   </Target>
 </Project>

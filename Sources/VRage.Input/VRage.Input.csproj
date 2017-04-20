@@ -110,14 +110,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="SharpDX">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Desktop">
-      <HintPath>..\..\3rd\SharpDX\SharpDX.Desktop.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.Desktop.dll</HintPath>
     </Reference>
-    <Reference Include="SharpDX.DirectInput, Version=2.6.3.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SharpDX.DirectInput">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\3rd\SharpDX\SharpDX.DirectInput.dll</HintPath>
+      <HintPath>..\..\3rd\SharpDX\$(Platform)\SharpDX.DirectInput.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Windows.Forms" />
