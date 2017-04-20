@@ -1,3 +1,9 @@
+Equinox's Fork
+===============
+This fork contains the SE source code, as up to date as possible, building and running against current content.  It also features working `*.XmlSerialiers.dll` generation with SGen.exe.  It's all built with Visual Studio 2015 and you'll need to follow the instructions [here](https://github.com/Equinox-/SpaceEngineers/blob/master/BINARIES.MD) to copy 64 bit binaries.
+
+The branch `master` contains mostly unmodified source code.  Other branches contain experimental features, see the [wiki](https://github.com/Equinox-/SpaceEngineers/wiki/Equinox's-Branches) for details.
+
 Space Engineers
 ===============
 
