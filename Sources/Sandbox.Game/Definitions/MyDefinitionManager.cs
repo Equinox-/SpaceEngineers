@@ -377,7 +377,7 @@ namespace Sandbox.Definitions
             //*
 
             // Spread testing of models over the available workers
-            ParallelTasks.Parallel.ForEach<string>(GetDefinitionPairNames(), delegate(string pair)
+            ParallelTasks.Parallel.ForEach<string>(GetDefinitionPairNames(), delegate (string pair)
             {
                 var group = GetDefinitionGroup(pair);
                 TestCubeBlockModel(group.Small);
@@ -525,13 +525,13 @@ namespace Sandbox.Definitions
 
             ProfilerShort.BeginNextBlock("Postprocessing");
 
-            var phases = new Action<MyObjectBuilder_Definitions, MyModContext, DefinitionSet, bool>[]
+            var phases = new LoadPhase[]
             {
-                LoadPhase1,
-                LoadPhase2,
-                LoadPhase3,
-                LoadPhase4,
-                LoadPhase5,
+                new LoadPhase(LoadPhase1),
+                new LoadPhase(LoadPhase2),
+                new LoadPhase(LoadPhase3_PerBuilder, LoadPhase3_Post),
+                new LoadPhase(LoadPhase4),
+                new LoadPhase(LoadPhase5),
             };
 
             for (int i = 0; i < phases.Length; i++)
@@ -539,12 +539,7 @@ namespace Sandbox.Definitions
                 try
                 {
                     ProfilerShort.Begin("Phase " + (i + 1));
-                    foreach (var builder in definitionsBuilders)
-                    {
-                        context.CurrentFile = builder.Item2;
-                        var phase = phases[i];
-                        phase(builder.Item1, context, definitionSet, failOnDebug);
-                    }
+                    phases[i].RunPhase(context, definitionSet, definitionsBuilders, failOnDebug);
                     ProfilerShort.End();
                 }
                 catch (Exception e)
@@ -561,6 +556,32 @@ namespace Sandbox.Definitions
             AfterLoad(context, definitionSet);
 
             ProfilerShort.End();
+        }
+
+        private struct LoadPhase
+        {
+            private readonly Action<MyObjectBuilder_Definitions, MyModContext, DefinitionSet, bool> m_perFile;
+            private readonly Action<MyModContext, DefinitionSet, bool> m_postPhase;
+
+            public LoadPhase(Action<MyObjectBuilder_Definitions, MyModContext, DefinitionSet, bool> perFile,
+                Action<MyModContext, DefinitionSet, bool> postPhase = null)
+            {
+                this.m_perFile = perFile;
+                this.m_postPhase = postPhase;
+            }
+
+            public void RunPhase(MyModContext context, DefinitionSet definitionSet,
+                List<Tuple<MyObjectBuilder_Definitions, string>> definitionsBuilders, bool failOnDebug)
+            {
+                if (m_perFile != null)
+                    foreach (var builder in definitionsBuilders)
+                    {
+                        context.CurrentFile = builder.Item2;
+                        m_perFile(builder.Item1, context, definitionSet, failOnDebug);
+                    }
+                if (m_postPhase != null)
+                    m_postPhase(context, definitionSet, failOnDebug);
+            }
         }
 
         private void AfterLoad(MyModContext context, DefinitionSet definitionSet)
@@ -704,7 +725,7 @@ namespace Sandbox.Definitions
             }
         }
 
-        private static void ReadPrefabHeader(string file, ref  List<MyObjectBuilder_PrefabDefinition> prefabs, XmlReader reader)
+        private static void ReadPrefabHeader(string file, ref List<MyObjectBuilder_PrefabDefinition> prefabs, XmlReader reader)
         {
             MyObjectBuilder_PrefabDefinition definition = new MyObjectBuilder_PrefabDefinition();
             definition.PrefabPath = file;
@@ -1212,7 +1233,7 @@ namespace Sandbox.Definitions
             }
         }
 
-        void LoadPhase3(MyObjectBuilder_Definitions objBuilder, MyModContext context, DefinitionSet definitionSet, bool failOnDebug)
+        void LoadPhase3_PerBuilder(MyObjectBuilder_Definitions objBuilder, MyModContext context, DefinitionSet definitionSet, bool failOnDebug)
         {
             if (objBuilder.CubeBlocks != null)
             {
@@ -1222,9 +1243,13 @@ namespace Sandbox.Definitions
                 ToDefinitions(context, definitionSet.m_definitionsById, definitionSet.m_uniqueCubeBlocksBySize, objBuilder.CubeBlocks, failOnDebug);
 
                 MySandboxGame.Log.WriteLine("Created block definitions");
-                foreach (var size in definitionSet.m_uniqueCubeBlocksBySize)
-                    PrepareBlockBlueprints(context, definitionSet.m_blueprintsById, size);
             }
+        }
+
+        void LoadPhase3_Post(MyModContext context, DefinitionSet definitionSet, bool failOnDebug)
+        {
+            foreach (var size in definitionSet.m_uniqueCubeBlocksBySize)
+                PrepareBlockBlueprints(context, definitionSet.m_blueprintsById, size);
         }
 
         void LoadPhase4(MyObjectBuilder_Definitions objBuilder, MyModContext context, DefinitionSet definitionSet, bool failOnDebug)
@@ -2186,8 +2211,8 @@ namespace Sandbox.Definitions
             {
                 var cubeBlock = entry.Value;
 
-                if (!context.IsBaseGame)
-                    MySandboxGame.Log.WriteLine("Loading cube block: " + entry.Key);
+                //                if (!context.IsBaseGame)
+                //                    MySandboxGame.Log.WriteLine("Loading cube block: " + entry.Key);
 
                 if (!MyFakes.ENABLE_NON_PUBLIC_BLOCKS && cubeBlock.Public == false) continue;
 
