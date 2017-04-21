@@ -2,7 +2,7 @@
 {
     static class MyDebugGeometryStage2
     {
-        public static bool EnableNewGeometryPipeline = true;
+        public static bool EnableNewGeometryPipeline = false;
         public static bool EnableNonstandardModels = true;
         // the application is slower, but we can have a much more info on profiling:
         public static bool EnableParallelRendering = true;

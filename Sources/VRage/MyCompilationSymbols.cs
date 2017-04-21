@@ -39,6 +39,9 @@ namespace VRage
         // force stereo rendering even when OpenVR is not available
         public const bool DX11ForceStereo = false;
 
+        // if OpenVR starts without errors use stereo rendering
+        public const bool DX11AllowStereo = true;
+
         public const bool EnableShaderDebuggingInNSight = false;
         public const bool EnableShaderPreprocessorInNSight = false; // In NSight, all preprocessors will be processed and you will see postprocessed code
 

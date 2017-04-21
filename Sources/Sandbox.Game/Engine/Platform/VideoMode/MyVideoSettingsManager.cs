@@ -8,8 +8,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Management;
 using System.Reflection;
+using Infinario.Logging;
 using VRage;
 using VRage.Game;
+using VRage.OpenVRWrapper;
 using VRage.Utils;
 using VRage.Win32;
 using VRageMath;
@@ -209,7 +211,18 @@ namespace Sandbox.Engine.Platform.VideoMode
 
                 if (MyCompilationSymbols.DX11ForceStereo)
                     settings.UseStereoRendering = true;
-
+                else if (MyCompilationSymbols.DX11AllowStereo)
+                {
+                    try
+                    {
+                        var openVR = new MyOpenVR();
+                        settings.UseStereoRendering = true;
+                    }
+                    catch (Exception e)
+                    {
+                        MySandboxGame.Log.WriteLineAndConsole("No OpenVR Device Found: " + e);
+                    }
+                }
                 return settings;
             }
             else
