@@ -114,14 +114,19 @@ namespace VRageRender
             }
         }
 
-        public static void SetViewport(MyRenderContext rc, MyStereoRegion region)
+        public static SharpDX.ViewportF GetViewport(MyStereoRegion region)
         {
             SharpDX.ViewportF viewport = new SharpDX.ViewportF(0, 0, MyRender11.ViewportResolution.X, MyRender11.ViewportResolution.Y);
             if (region == MyStereoRegion.LEFT)
                 viewport = new SharpDX.ViewportF(viewport.X, viewport.Y, viewport.Width / 2, viewport.Height);
             else if (region == MyStereoRegion.RIGHT)
                 viewport = new SharpDX.ViewportF(viewport.X + viewport.Width / 2, viewport.Y, viewport.Width / 2, viewport.Height);
-            rc.SetViewport(viewport);
+            return viewport;
+        }
+
+        public static void SetViewport(MyRenderContext rc, MyStereoRegion region)
+        {
+            rc.SetViewport(GetViewport(region));
         }
 
         // this method set viewport that is related to the current MyStereoRender.RenderRegion flag

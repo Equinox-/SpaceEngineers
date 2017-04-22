@@ -478,36 +478,6 @@ namespace VRageRender
                 }
                 MyGpuProfiler.IC_EndBlockAlways();
 
-                if (MySSAO.Params.Enabled && Settings.User.AmbientOcclusionEnabled
-                    && m_debugOverrides.Postprocessing && m_debugOverrides.SSAO)
-                {
-                    ProfilerShort.BeginNextBlock("SSAO");
-                    MyGpuProfiler.IC_BeginBlockAlways("SSAO");
-                    MySSAO.Run(ambientOcclusionRtv, MyGBuffer.Main);
-
-                    if (MySSAO.Params.UseBlur)
-                    {
-                        IBorrowedRtvTexture ambientOcclusionHelper = MyManagers.RwTexturesPool.BorrowRtv("MyScreenDependants.AmbientOcclusionHelper",
-                            ResolutionI.X, ResolutionI.Y, SharpDX.DXGI.Format.R8_UNorm);
-
-                        MyBlur.Run(ambientOcclusionRtv, ambientOcclusionHelper, ambientOcclusionRtv, clearColor: Color4.White);
-                        ambientOcclusionHelper.Release();
-                    }
-                    MyGpuProfiler.IC_EndBlockAlways();
-                }
-                else if (MyHBAO.Params.Enabled && Settings.User.AmbientOcclusionEnabled
-                         && m_debugOverrides.Postprocessing && m_debugOverrides.SSAO)
-                {
-                    ProfilerShort.BeginNextBlock("HBAO");
-                    MyGpuProfiler.IC_BeginBlock("HBAO");
-                    MyHBAO.Run(ambientOcclusionRtv, MyGBuffer.Main);
-                    MyGpuProfiler.IC_EndBlock();
-                }
-                else
-                {
-                    MyRender11.RC.ClearRtv(ambientOcclusionRtv, Color4.White);
-                }
-
                 ProfilerShort.BeginNextBlock("Lights");
                 MyGpuProfiler.IC_BeginBlockAlways("Lights");
                 if (m_debugOverrides.Lighting)
@@ -520,6 +490,36 @@ namespace VRageRender
             }
             MyStereoRender.RenderRegion = MyStereoRegion.FULLSCREEN;
             MyGpuProfiler.IC_EndBlock();
+
+            if (MySSAO.Params.Enabled && Settings.User.AmbientOcclusionEnabled
+                && m_debugOverrides.Postprocessing && m_debugOverrides.SSAO)
+            {
+                ProfilerShort.BeginNextBlock("SSAO");
+                MyGpuProfiler.IC_BeginBlockAlways("SSAO");
+                MySSAO.Run(ambientOcclusionRtv, MyGBuffer.Main);
+
+                if (MySSAO.Params.UseBlur)
+                {
+                    IBorrowedRtvTexture ambientOcclusionHelper = MyManagers.RwTexturesPool.BorrowRtv("MyScreenDependants.AmbientOcclusionHelper",
+                        ResolutionI.X, ResolutionI.Y, SharpDX.DXGI.Format.R8_UNorm);
+
+                    MyBlur.Run(ambientOcclusionRtv, ambientOcclusionHelper, ambientOcclusionRtv, clearColor: Color4.White);
+                    ambientOcclusionHelper.Release();
+                }
+                MyGpuProfiler.IC_EndBlockAlways();
+            }
+            else if (MyHBAO.Params.Enabled && Settings.User.AmbientOcclusionEnabled
+                     && m_debugOverrides.Postprocessing && m_debugOverrides.SSAO)
+            {
+                ProfilerShort.BeginNextBlock("HBAO");
+                MyGpuProfiler.IC_BeginBlock("HBAO");
+                MyHBAO.Run(ambientOcclusionRtv, MyGBuffer.Main);
+                MyGpuProfiler.IC_EndBlock();
+            }
+            else
+            {
+                MyRender11.RC.ClearRtv(ambientOcclusionRtv, Color4.White);
+            }
 
             ProfilerShort.BeginNextBlock("Occlusion Queries");
             MyGpuProfiler.IC_BeginBlock("Occlusion Queries");
