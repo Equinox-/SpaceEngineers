@@ -111,7 +111,7 @@ namespace VRageRender
                 }
                 else
                 {
-                     statList[passHash] = stats;
+                    statList[passHash] = stats;
                 }
             }
 
@@ -246,7 +246,7 @@ namespace VRageRender
             int height = MyRender11.ViewportResolution.Y;
             float fovH = message.FOV;
             envMatrices.FovH = fovH;
-            envMatrices.FovV = (float)(2 * Math.Atan(Math.Tan(fovH / 2.0) * (height/ (double) width)));
+            envMatrices.FovV = (float)(2 * Math.Atan(Math.Tan(fovH / 2.0) * (height / (double)width)));
 
             MyUtils.Init(ref envMatrices.ViewFrustumD);
             envMatrices.ViewFrustumD.Matrix = envMatrices.ViewProjectionD;
@@ -276,7 +276,7 @@ namespace VRageRender
                 PendingComponentsToUpdate.Remove(renderableComponent);
             }
             m_pendingComponentsToRemove.Clear();
-  
+
 
             ProfilerShort.BeginNextBlock("MyInstanceLodComponent OnFrameUpdate");
             foreach (var instanceLodComponent in MyComponentFactory<MyInstanceLodComponent>.GetAll())
@@ -394,7 +394,7 @@ namespace VRageRender
                 MyManagers.GeometryRenderer.Render(cullQuery, geometrySrvStrategy);
             ProfilerShort.End();
             MyGpuProfiler.IC_EndBlock();
-            
+
             MyGpuProfiler.IC_BeginBlock("MyGeometryRenderer.Render");
             Debug.Assert(m_commandLists.Count == 0, "Not all command lists executed last frame!");
             ProfilerShort.Begin("DynamicGeometryRenderer");
@@ -447,7 +447,7 @@ namespace VRageRender
 
             MyRender11.RC.ResetTargets();
 
-            IBorrowedRtvTexture ambientOcclusionRtv = MyManagers.RwTexturesPool.BorrowRtv("MyScreenDependants.AmbientOcclusion", 
+            IBorrowedRtvTexture ambientOcclusionRtv = MyManagers.RwTexturesPool.BorrowRtv("MyScreenDependants.AmbientOcclusion",
                 ResolutionI.X, ResolutionI.Y, SharpDX.DXGI.Format.R8_UNorm);
             debugAmbientOcclusion = ambientOcclusionRtv; // Pass the texture to the outside
 
@@ -487,7 +487,7 @@ namespace VRageRender
 
                     if (MySSAO.Params.UseBlur)
                     {
-                        IBorrowedRtvTexture ambientOcclusionHelper = MyManagers.RwTexturesPool.BorrowRtv("MyScreenDependants.AmbientOcclusionHelper", 
+                        IBorrowedRtvTexture ambientOcclusionHelper = MyManagers.RwTexturesPool.BorrowRtv("MyScreenDependants.AmbientOcclusionHelper",
                             ResolutionI.X, ResolutionI.Y, SharpDX.DXGI.Format.R8_UNorm);
 
                         MyBlur.Run(ambientOcclusionRtv, ambientOcclusionHelper, ambientOcclusionRtv, clearColor: Color4.White);
@@ -603,7 +603,8 @@ namespace VRageRender
 
 
             ProfilerShort.Begin("MyHighlight.Run");
-            MyHighlight.Run(renderedImage, fxaaTarget, depthStencilCopy);
+            if (!MyStereoRender.Enable || Settings.EnableHighlightsInVR)
+                MyHighlight.Run(renderedImage, fxaaTarget, depthStencilCopy);
             ProfilerShort.End();
 
             if (depthStencilCopy != null)

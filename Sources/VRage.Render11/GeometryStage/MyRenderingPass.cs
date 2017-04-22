@@ -121,7 +121,7 @@ namespace VRageRender
         internal virtual void Cleanup()
         {
             m_rc = null;
-            if(Locals != null)
+            if (Locals != null)
                 Locals.Clear();
             Stats.Clear();
             m_joined = false;
@@ -179,9 +179,35 @@ namespace VRageRender
             }
         }
 
+        /// <summary>
+        /// Stereo-compatible replacement for what happens between begin() and end()
+        /// </summary>
+        /// <param name="contents">Rendering payload of the pass</param>
+        internal void ExecutePassStereo(Action contents)
+        {
+            int nPasses = MyStereoRender.Enable ? 2 : 1;
+            for (int i = 0; i < nPasses; i++)
+            {
+                if (MyStereoRender.Enable)
+                {
+                    MyStereoRender.RenderRegion = i == 0 ? MyStereoRegion.LEFT : MyStereoRegion.RIGHT;
+                    MyStereoRender.BindRawCB_FrameConstants(RC);
+                    MyStereoRender.SetViewport(RC);
+
+                    var viewProjTranspose = Matrix.Transpose(MyStereoRender.EnvMatricesCurrent.ViewProjectionAt0);
+                    var mapping = MyMapping.MapDiscard(RC, MyCommon.ProjectionConstants);
+                    mapping.WriteAndPosition(ref viewProjTranspose);
+                    mapping.Unmap();
+                }
+                contents();
+            }
+            if (MyStereoRender.Enable)
+                MyStereoRender.RenderRegion = MyStereoRegion.FULLSCREEN;
+        }
+
         public static string ToString(MyMaterialType materialType)
         {
-            switch(materialType)
+            switch (materialType)
             {
                 case MyMaterialType.ALPHA_MASKED:
                     return "ALPHA_MASKED";
@@ -279,7 +305,7 @@ namespace VRageRender
             {
                 int size = sizeof(MyMergeInstancingConstants);
                 var buffer = new byte[sizeof(MyMergeInstancingConstants)];
-                
+
                 proxy.ObjectConstants = new MyConstantsPack()
                 {
                     BindFlag = MyBindFlag.BIND_VS,
@@ -318,7 +344,7 @@ namespace VRageRender
         {
             MyMapping mapping;
             mapping = MyMapping.MapDiscard(rc, proxy.ObjectBuffer);
-            if(proxy.NonVoxelObjectData.IsValid)
+            if (proxy.NonVoxelObjectData.IsValid)
             {
                 mapping.WriteAndPosition(ref proxy.NonVoxelObjectData);
             }
@@ -351,7 +377,7 @@ namespace VRageRender
 
             rc.SetVertexBuffer(0, buffers.VB0);
             rc.SetVertexBuffer(1, buffers.VB1);
-            
+
             if (proxy.InstancingEnabled && proxy.Instancing.VB != null)
             {
                 rc.SetVertexBuffer(2, proxy.Instancing.VB);
@@ -374,20 +400,20 @@ namespace VRageRender
             switch (proxy.Material.Info.Technique)
             {
                 case MyMeshDrawTechnique.MESH:
-                {
-                    if (proxy.InstanceCount == 0)
-                        draw &= MyRender11.Settings.DrawMeshes;
-                    else
-                        draw &= MyRender11.Settings.DrawInstancedMeshes;
-                    break;
-                }
+                    {
+                        if (proxy.InstanceCount == 0)
+                            draw &= MyRender11.Settings.DrawMeshes;
+                        else
+                            draw &= MyRender11.Settings.DrawInstancedMeshes;
+                        break;
+                    }
                 case MyMeshDrawTechnique.ALPHA_MASKED:
-                {
-                    draw &= MyRender11.Settings.DrawAlphamasked;
-                    if (proxy.Material.Info.Facing == MyFacingEnum.Impostor)
-                        draw &= MyRender11.Settings.DrawImpostors;
-                    break;
-                }
+                    {
+                        draw &= MyRender11.Settings.DrawAlphamasked;
+                        if (proxy.Material.Info.Facing == MyFacingEnum.Impostor)
+                            draw &= MyRender11.Settings.DrawImpostors;
+                        break;
+                    }
             }
         }
 
@@ -396,7 +422,7 @@ namespace VRageRender
             var renderPass = (MyRenderingPass)MyObjectPoolManager.Allocate(this.GetType());
 
             renderPass.m_rc = m_rc;
-            if(renderPass.Locals != null)
+            if (renderPass.Locals != null)
                 renderPass.Locals.Clear();
             renderPass.Stats = default(MyPassStats);
             renderPass.m_joined = m_joined;

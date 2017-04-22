@@ -340,7 +340,7 @@ namespace VRageRender
 
         public static void RemoveObjects(uint ID, string[] sectionNames)
         {
-             m_highlights.Remove(ID);
+            m_highlights.Remove(ID);
         }
 
         public static bool HasHighlights
@@ -370,29 +370,30 @@ namespace VRageRender
             IBorrowedRtvTexture rgba8_1 = MyManagers.RwTexturesPool.BorrowRtv("MyHighlight.Rgba8_1", Format.R8G8B8A8_UNorm_SRgb, samples);
             RC.ClearRtv(rgba8_1, new SharpDX.Color4(0, 0, 0, 0));
             RC.SetRtv(depthStencilCopy, MyDepthStencilAccess.DepthReadOnly, rgba8_1);
-
-            foreach (var pair in m_highlights)
+            MyHighlightPass.Instance.ExecutePassStereo(() =>
             {
-                MyActor actor = MyIDTracker<MyActor>.FindByID(pair.Key);
-                if (actor == null)
+                foreach (var pair in m_highlights)
                 {
-                    MyRenderProxy.Fail("The actor cannot be found for highlight. This bug is outside of the renderer.");
-                    continue;
+                    MyActor actor = MyIDTracker<MyActor>.FindByID(pair.Key);
+                    if (actor == null)
+                    {
+                        MyRenderProxy.Fail("The actor cannot be found for highlight. This bug is outside of the renderer.");
+                        continue;
+                    }
+                    MyRenderableComponent renderableComponent = actor.GetRenderable();
+                    MyInstanceComponent instanceComponent = actor.GetInstance();
+                    if (renderableComponent != null)
+                        DrawRenderableComponent(actor, renderableComponent, pair.Value);
+                    else if (instanceComponent != null)
+                        DrawInstanceComponent(instanceComponent, pair.Value);
+                    else
+                    {
+                        // If an actor has been removed without removing outlines, just remove the outlines too
+                        m_keysToRemove.Add(pair.Key);
+                        MyRenderProxy.Fail("The actor has been removed, but the highligh is still active. This bug is caused by the issue out of the renderer.");
+                    }
                 }
-                MyRenderableComponent renderableComponent = actor.GetRenderable();
-                MyInstanceComponent instanceComponent = actor.GetInstance();
-                if (renderableComponent != null)
-                    DrawRenderableComponent(actor, renderableComponent, pair.Value);
-                else if (instanceComponent != null)
-                    DrawInstanceComponent(instanceComponent, pair.Value);
-                else
-                {
-                    // If an actor has been removed without removing outlines, just remove the outlines too
-                    m_keysToRemove.Add(pair.Key);
-                    MyRenderProxy.Fail("The actor has been removed, but the highligh is still active. This bug is caused by the issue out of the renderer.");
-                }
-            }
-
+            });
             MyHighlightPass.Instance.End();
             RC.SetBlendState(null);
             foreach (var outlineKey in m_keysToRemove)

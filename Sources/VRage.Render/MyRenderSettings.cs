@@ -301,6 +301,11 @@ namespace VRageRender
         public bool OffscreenSpritesRendering;
 
         public MyRenderSettings1 User;
+        
+        // VR Stuff
+        public bool EnableHighlightsInVR;
+
+        public bool EnableStereoStencilClipping;
 
         static MyRenderSettings()
         {
@@ -424,6 +429,9 @@ namespace VRageRender
                 DebugDrawDecals = false,
                 PerInstanceLods = true,
                 OffscreenSpritesRendering = false,
+
+                EnableHighlightsInVR = true,
+                EnableStereoStencilClipping = false
             };
         }
     }

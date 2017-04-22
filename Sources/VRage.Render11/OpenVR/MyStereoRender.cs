@@ -39,7 +39,7 @@ namespace VRageRender
     class MyStereoRender
     {
         internal static bool Enable { get { return MyRender11.DeviceSettings.UseStereoRendering; } }
-        internal static bool EnableUsingStencilMask { get { return true; } }
+        internal static bool EnableUsingStencilMask { get { return MyRender11.Settings.EnableStereoStencilClipping; } }
 
         internal static MyEnvironmentMatrices EnvMatricesLeftEye = new MyEnvironmentMatrices();
         internal static MyEnvironmentMatrices EnvMatricesRightEye = new MyEnvironmentMatrices();

@@ -55,32 +55,19 @@ namespace VRageRender
 
 
             pass.Begin();
-            int nPasses = MyStereoRender.Enable ? 2 : 1;
-            for (int i = 0; i < nPasses; i++)
+            pass.ExecutePassStereo(() =>
             {
-                if (MyStereoRender.Enable)
-                {
-                    MyStereoRender.RenderRegion = i == 0 ? MyStereoRegion.LEFT : MyStereoRegion.RIGHT;
-                    MyStereoRender.BindRawCB_FrameConstants(RC);
-                    MyStereoRender.SetViewport(RC);
-
-                    var viewProjTranspose = Matrix.Transpose(MyStereoRender.EnvMatricesCurrent.ViewProjectionAt0);
-                    var mapping = MyMapping.MapDiscard(RC, MyCommon.ProjectionConstants);
-                    mapping.WriteAndPosition(ref viewProjTranspose);
-                    mapping.Unmap();
-                }
                 foreach (var key in m_sortedKeys)
                 {
                     var proxies = m_batches[key];
                     foreach (var proxy in proxies)
                         pass.RecordCommands(proxy);
-                    if (i == nPasses - 1)
-                        proxies.Clear();
+                    proxies.Clear();
                 }
-            }
-            if (MyStereoRender.Enable)
-                MyStereoRender.RenderRegion = MyStereoRegion.FULLSCREEN;
+            });
             pass.End();
+            foreach (var key in m_sortedKeys)
+                m_batches[key].Clear();
 
             // Sort for depth only pass
             m_squaredDistances.Sort(GlassComparer);
