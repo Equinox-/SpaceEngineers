@@ -65,7 +65,7 @@ namespace VRageRender
         static PixelShaderId m_cloudPs;
         static ComputeShaderId m_fogShader;
         static InputLayoutId m_proxyIL;
- 
+
         const int m_numFogThreads = 8;
 
         public static bool DrawFog = false;
@@ -110,7 +110,7 @@ namespace VRageRender
                 var cmTexture = textures[0].Insert(textures[0].LastIndexOf('.'), "_cm");
                 var alphaTexture = textures[0].Insert(textures[0].LastIndexOf('.'), "_alphamask");
                 var normalGlossTexture = textures[0].Insert(textures[0].LastIndexOf('.'), "_ng");
-                MyFileTextureManager texManager = MyManagers.FileTextures; 
+                MyFileTextureManager texManager = MyManagers.FileTextures;
                 textureInfo = new MyCloudLayer.MyCloudTextureInfo
                 {
                     ColorMetalTexture = texManager.GetTexture(cmTexture, MyFileTextureEnum.COLOR_METAL),
@@ -120,7 +120,7 @@ namespace VRageRender
             }
             else
             {
-                MyFileTextureManager texManager = MyManagers.FileTextures; 
+                MyFileTextureManager texManager = MyManagers.FileTextures;
                 textureInfo = new MyCloudLayer.MyCloudTextureInfo
                 {
                     ColorMetalTexture = texManager.GetTexture(MyMeshes.GetMeshPart(mesh, 0, 0).Info.Material.Info.ColorMetal_Texture.ToString(), MyFileTextureEnum.COLOR_METAL),
@@ -174,6 +174,7 @@ namespace VRageRender
 
             immediateContext.SetRtv(MyGBuffer.Main.DepthStencil, MyDepthStencilAccess.ReadOnly, MyGBuffer.Main.LBuffer);
 
+            // Same at atmospheres.  In theory should be twice, one for each eye.  But IPD << planet size.
             m_cloudLayers.OrderByDescending(x =>
             {
                 MyCloudLayer cloudLayer = x.Value;
@@ -181,71 +182,84 @@ namespace VRageRender
                 Vector3D layerToCameraDirection = -Vector3D.Normalize(cameraToLayer);
                 return (cameraToLayer + layerToCameraDirection * cloudLayer.Altitude).Length();
             });
-
-            foreach (var cloudLayer in m_cloudLayers)
+            int nPasses = MyStereoRender.Enable ? 2 : 1;
+            for (int i = 0; i < nPasses; i++)
             {
-                var modifiableData = m_modifiableCloudLayerData[cloudLayer.Key];
-                int currentGameplayFrame = MyRender11.GameplayFrameCounter;
-                var increment = cloudLayer.Value.AngularVelocity * (float)(currentGameplayFrame - modifiableData.LastGameplayFrameUpdate) / 10.0f;
-                modifiableData.RadiansAroundAxis += increment; // Constant for backward compatibility
-                if (modifiableData.RadiansAroundAxis >= 2 * Math.PI)
-                    modifiableData.RadiansAroundAxis -= 2 * Math.PI;
-
-                modifiableData.LastGameplayFrameUpdate = currentGameplayFrame;
-
-                double scaledAltitude = cloudLayer.Value.Altitude;
-                Vector3D centerPoint = cloudLayer.Value.CenterPoint;
-                Vector3D cameraPosition = MyRender11.Environment.Matrices.CameraPosition;
-                double cameraDistanceFromCenter = (centerPoint - cameraPosition).Length();
-
-                if (cloudLayer.Value.ScalingEnabled)
+                if (MyStereoRender.Enable)
                 {
-                    double threshold = cloudLayer.Value.Altitude * 0.95;
-                    if (cameraDistanceFromCenter > threshold)
+                    MyStereoRender.RenderRegion = i == 0 ? MyStereoRegion.LEFT : MyStereoRegion.RIGHT;
+                    MyStereoRender.SetViewport(immediateContext);
+                    MyStereoRender.BindRawCB_FrameConstants(immediateContext);
+                }
+
+                var environmentMatrices = MyStereoRender.Enable
+                    ? MyStereoRender.EnvMatricesCurrent
+                    : MyRender11.Environment.Matrices;
+                foreach (var cloudLayer in m_cloudLayers)
+                {
+                    var modifiableData = m_modifiableCloudLayerData[cloudLayer.Key];
+                    int currentGameplayFrame = MyRender11.GameplayFrameCounter;
+                    var increment = cloudLayer.Value.AngularVelocity * (float)(currentGameplayFrame - modifiableData.LastGameplayFrameUpdate) / 10.0f;
+                    modifiableData.RadiansAroundAxis += increment; // Constant for backward compatibility
+                    if (modifiableData.RadiansAroundAxis >= 2 * Math.PI)
+                        modifiableData.RadiansAroundAxis -= 2 * Math.PI;
+
+                    modifiableData.LastGameplayFrameUpdate = currentGameplayFrame;
+
+                    double scaledAltitude = cloudLayer.Value.Altitude;
+                    Vector3D centerPoint = cloudLayer.Value.CenterPoint;
+                    Vector3D cameraPosition = environmentMatrices.CameraPosition;
+                    double cameraDistanceFromCenter = (centerPoint - cameraPosition).Length();
+
+                    if (cloudLayer.Value.ScalingEnabled)
                     {
-                        scaledAltitude = MathHelper.Clamp(scaledAltitude * (1 - MathHelper.Clamp((cameraDistanceFromCenter - threshold) / (threshold * 1.5), 0.0, 1.0)), cloudLayer.Value.MinScaledAltitude, cloudLayer.Value.Altitude);
+                        double threshold = cloudLayer.Value.Altitude * 0.95;
+                        if (cameraDistanceFromCenter > threshold)
+                        {
+                            scaledAltitude = MathHelper.Clamp(scaledAltitude * (1 - MathHelper.Clamp((cameraDistanceFromCenter - threshold) / (threshold * 1.5), 0.0, 1.0)), cloudLayer.Value.MinScaledAltitude, cloudLayer.Value.Altitude);
+                        }
                     }
+
+                    MatrixD worldMatrix = MatrixD.CreateScale(scaledAltitude) * MatrixD.CreateFromAxisAngle(cloudLayer.Value.RotationAxis, (float)modifiableData.RadiansAroundAxis);
+                    worldMatrix.Translation = cloudLayer.Value.CenterPoint;
+                    worldMatrix.Translation -= environmentMatrices.CameraPosition;
+
+                    float layerAlpha = 1.0f;
+
+                    double currentRelativeAltitude = (cameraDistanceFromCenter - cloudLayer.Value.MinScaledAltitude) / (cloudLayer.Value.MaxPlanetHillRadius - cloudLayer.Value.MinScaledAltitude);
+                    if (cloudLayer.Value.FadeOutRelativeAltitudeStart > cloudLayer.Value.FadeOutRelativeAltitudeEnd)
+                    {
+                        layerAlpha = (float)MathHelper.Clamp(1.0 - (cloudLayer.Value.FadeOutRelativeAltitudeStart - currentRelativeAltitude) / (cloudLayer.Value.FadeOutRelativeAltitudeStart - cloudLayer.Value.FadeOutRelativeAltitudeEnd), 0.0, 1.0);
+                    }
+                    else if (cloudLayer.Value.FadeOutRelativeAltitudeStart < cloudLayer.Value.FadeOutRelativeAltitudeEnd)
+                    {
+                        layerAlpha = (float)MathHelper.Clamp(1.0 - (currentRelativeAltitude - cloudLayer.Value.FadeOutRelativeAltitudeStart) / (cloudLayer.Value.FadeOutRelativeAltitudeEnd - cloudLayer.Value.FadeOutRelativeAltitudeStart), 0.0, 1.0);
+                    }
+
+                    Vector4 layerColor = new Vector4(1, 1, 1, layerAlpha);
+
+                    var constants = new CloudsConstants();
+                    constants.World = MatrixD.Transpose(worldMatrix);
+                    constants.ViewProj = MatrixD.Transpose(environmentMatrices.ViewProjectionAt0);
+                    constants.Color = layerColor;
+
+                    var mapping = MyMapping.MapDiscard(cb);
+                    mapping.WriteAndPosition(ref constants);
+                    mapping.Unmap();
+
+                    MeshId sphereMesh = cloudLayer.Value.Mesh;
+                    LodMeshId lodMesh = MyMeshes.GetLodMesh(sphereMesh, 0);
+                    MyMeshBuffers buffers = lodMesh.Buffers;
+                    immediateContext.SetVertexBuffer(0, buffers.VB0);
+                    immediateContext.SetVertexBuffer(1, buffers.VB1);
+                    immediateContext.SetIndexBuffer(buffers.IB);
+
+                    immediateContext.PixelShader.SetSrv(0, cloudLayer.Value.TextureInfo.ColorMetalTexture);
+                    immediateContext.PixelShader.SetSrv(1, cloudLayer.Value.TextureInfo.AlphaTexture);
+                    immediateContext.PixelShader.SetSrv(2, cloudLayer.Value.TextureInfo.NormalGlossTexture);
+
+                    immediateContext.DrawIndexed(lodMesh.Info.IndicesNum, 0, 0);
                 }
-
-                MatrixD worldMatrix = MatrixD.CreateScale(scaledAltitude) * MatrixD.CreateFromAxisAngle(cloudLayer.Value.RotationAxis, (float)modifiableData.RadiansAroundAxis);
-                worldMatrix.Translation = cloudLayer.Value.CenterPoint;
-                worldMatrix.Translation -= MyRender11.Environment.Matrices.CameraPosition;
-
-                float layerAlpha = 1.0f;
-
-                double currentRelativeAltitude = (cameraDistanceFromCenter - cloudLayer.Value.MinScaledAltitude) / (cloudLayer.Value.MaxPlanetHillRadius - cloudLayer.Value.MinScaledAltitude);
-                if (cloudLayer.Value.FadeOutRelativeAltitudeStart > cloudLayer.Value.FadeOutRelativeAltitudeEnd)
-                {
-                    layerAlpha = (float)MathHelper.Clamp(1.0 - (cloudLayer.Value.FadeOutRelativeAltitudeStart - currentRelativeAltitude) / (cloudLayer.Value.FadeOutRelativeAltitudeStart - cloudLayer.Value.FadeOutRelativeAltitudeEnd), 0.0, 1.0);
-                }
-                else if (cloudLayer.Value.FadeOutRelativeAltitudeStart < cloudLayer.Value.FadeOutRelativeAltitudeEnd)
-                {
-                    layerAlpha = (float)MathHelper.Clamp(1.0 - (currentRelativeAltitude - cloudLayer.Value.FadeOutRelativeAltitudeStart) / (cloudLayer.Value.FadeOutRelativeAltitudeEnd - cloudLayer.Value.FadeOutRelativeAltitudeStart), 0.0, 1.0);
-                }
-
-                Vector4 layerColor = new Vector4(1, 1, 1, layerAlpha);
-
-                var constants = new CloudsConstants();
-                constants.World = MatrixD.Transpose(worldMatrix);
-                constants.ViewProj = MatrixD.Transpose(MyRender11.Environment.Matrices.ViewProjectionAt0);
-                constants.Color = layerColor;
-
-                var mapping = MyMapping.MapDiscard(cb);
-                mapping.WriteAndPosition(ref constants);
-                mapping.Unmap();
-
-                MeshId sphereMesh = cloudLayer.Value.Mesh;
-                LodMeshId lodMesh = MyMeshes.GetLodMesh(sphereMesh, 0);
-                MyMeshBuffers buffers = lodMesh.Buffers;
-                immediateContext.SetVertexBuffer(0, buffers.VB0);
-                immediateContext.SetVertexBuffer(1, buffers.VB1);
-                immediateContext.SetIndexBuffer(buffers.IB);
-
-                immediateContext.PixelShader.SetSrv(0, cloudLayer.Value.TextureInfo.ColorMetalTexture);
-                immediateContext.PixelShader.SetSrv(1, cloudLayer.Value.TextureInfo.AlphaTexture);
-                immediateContext.PixelShader.SetSrv(2, cloudLayer.Value.TextureInfo.NormalGlossTexture);
-
-                immediateContext.DrawIndexed(lodMesh.Info.IndicesNum, 0, 0);
             }
 
             immediateContext.PixelShader.SetSrv(0, null);
@@ -255,6 +269,8 @@ namespace VRageRender
             immediateContext.SetBlendState(null);
             immediateContext.SetRasterizerState(null);
             immediateContext.SetRtv(null);
+            if (MyStereoRender.Enable)
+                MyStereoRender.RenderRegion = MyStereoRegion.FULLSCREEN;
         }
 
         private static void FindClosestClouds(List<uint> indexList)

@@ -31,6 +31,7 @@ namespace VRageRender
             m_sortedKeys.Clear();
             foreach (var result in Renderables)
             {
+                // Stereo Rendering:  IPD << Size of a block so this is safe.
                 Vector3D pos = result.RenderProxy.WorldMatrix.Translation - MyRender11.Environment.Matrices.CameraPosition;
                 double distance = pos.LengthSquared();
                 if (handleGlassDepth(result, distance))
@@ -51,15 +52,34 @@ namespace VRageRender
             var pass = MyStaticGlassPass.Instance;
             pass.ViewProjection = MyRender11.Environment.Matrices.ViewProjectionAt0;
             pass.Viewport = new MyViewport(MyRender11.ViewportResolution.X, MyRender11.ViewportResolution.Y);
-            pass.Begin();
-            foreach (var key in m_sortedKeys)
-            {
-                var proxies = m_batches[key];
-                foreach (var proxy in proxies)
-                    pass.RecordCommands(proxy);
 
-                proxies.Clear();
+
+            pass.Begin();
+            int nPasses = MyStereoRender.Enable ? 2 : 1;
+            for (int i = 0; i < nPasses; i++)
+            {
+                if (MyStereoRender.Enable)
+                {
+                    MyStereoRender.RenderRegion = i == 0 ? MyStereoRegion.LEFT : MyStereoRegion.RIGHT;
+                    MyStereoRender.BindRawCB_FrameConstants(RC);
+                    MyStereoRender.SetViewport(RC);
+
+                    var viewProjTranspose = Matrix.Transpose(MyStereoRender.EnvMatricesCurrent.ViewProjectionAt0);
+                    var mapping = MyMapping.MapDiscard(RC, MyCommon.ProjectionConstants);
+                    mapping.WriteAndPosition(ref viewProjTranspose);
+                    mapping.Unmap();
+                }
+                foreach (var key in m_sortedKeys)
+                {
+                    var proxies = m_batches[key];
+                    foreach (var proxy in proxies)
+                        pass.RecordCommands(proxy);
+                    if (i == nPasses - 1)
+                        proxies.Clear();
+                }
             }
+            if (MyStereoRender.Enable)
+                MyStereoRender.RenderRegion = MyStereoRegion.FULLSCREEN;
             pass.End();
 
             // Sort for depth only pass

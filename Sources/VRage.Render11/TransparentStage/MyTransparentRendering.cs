@@ -144,7 +144,8 @@ namespace VRageRender
 
                 MyBillboardRenderer.RenderStandard(depthResource.SrvDepth);
             }
-            else SetupTargets(accumTarget, coverageTarget, true);
+            else
+                SetupTargets(accumTarget, coverageTarget, true);
 
             ProfilerShort.BeginNextBlock("GPU Particles");
             MyGpuProfiler.IC_BeginNextBlock("GPU Particles");

@@ -149,10 +149,10 @@ namespace VRageRender
             {
                 if (MyOpenVR.Static != null && message.LastMomentUpdateIndex != 0)
                 {
-                    MatrixD origin = MatrixD.Identity;
+                    var origin = MatrixD.Identity;
                     MyOpenVR.LMUMatrixGetOrigin(ref origin, message.LastMomentUpdateIndex);
                     // OpenVR View Matrix should be con
-                    MatrixD hmd = MatrixD.Invert(origin);
+                    var hmd = MatrixD.Invert(origin);
                     hmd.Translation = new Vector3D(0);
                     viewMatrix *= hmd;
                 }

@@ -60,7 +60,7 @@ namespace VRageRender
         static VertexShaderId m_proxyVs;
         //static 
         static InputLayoutId m_proxyIL;
-        
+
         private static IConstantBuffer m_cb;
         private static MeshId m_sphereMesh;
 
@@ -77,7 +77,7 @@ namespace VRageRender
 
             m_psEnv = MyShaders.CreatePs("Transparent/Atmosphere/AtmosphereEnv.hlsl");
             m_psEnvPerSample = MyShaders.CreatePs("Transparent/Atmosphere/AtmosphereEnv.hlsl", MyRender11.ShaderSampleFrequencyDefine());
-            
+
             m_precomputeDensity = MyShaders.CreateCs("Transparent/Atmosphere/AtmospherePrecompute.hlsl");
 
             m_proxyVs = MyShaders.CreateVs("Transparent/Atmosphere/AtmosphereVS.hlsl");
@@ -165,15 +165,20 @@ namespace VRageRender
             RC.ComputeShader.SetUav(0, null);
         }
 
-        internal static void CreateAtmosphere(uint ID, MatrixD worldMatrix, float planetRadius, float atmosphereRadius, 
+        internal static void CreateAtmosphere(uint ID, MatrixD worldMatrix, float planetRadius, float atmosphereRadius,
                                               Vector3 rayleighScattering, float rayleighHeightScale, Vector3 mieScattering, float mieHeightScale,
                                               float planetScaleFactor, float atmosphereScaleFactor)
-        {   
-            m_atmospheres.Add(ID, new MyAtmosphere { WorldMatrix = worldMatrix, PlanetRadius = planetRadius, AtmosphereRadius = atmosphereRadius,
-                                                   BetaRayleighScattering = rayleighScattering,
-                                                   BetaMieScattering = mieScattering,
-                                                   HeightScaleRayleighMie = new Vector2(rayleighHeightScale, mieHeightScale),
-                                                   PlanetScaleFactor = planetScaleFactor, AtmosphereScaleFactor = atmosphereScaleFactor
+        {
+            m_atmospheres.Add(ID, new MyAtmosphere
+            {
+                WorldMatrix = worldMatrix,
+                PlanetRadius = planetRadius,
+                AtmosphereRadius = atmosphereRadius,
+                BetaRayleighScattering = rayleighScattering,
+                BetaMieScattering = mieScattering,
+                HeightScaleRayleighMie = new Vector2(rayleighHeightScale, mieHeightScale),
+                PlanetScaleFactor = planetScaleFactor,
+                AtmosphereScaleFactor = atmosphereScaleFactor
             });
 
             AtmosphereLuts luts = new AtmosphereLuts();
@@ -210,7 +215,9 @@ namespace VRageRender
             var RC = MyImmediateRC.RC;
             RC.SetRtv(MyGBuffer.Main.DepthStencil, MyDepthStencilAccess.ReadOnly, MyGBuffer.Main.LBuffer);
             RC.PixelShader.SetSrvs(0, MyGBuffer.Main);
-            RenderAll(MyRender11.Environment.Matrices.CameraPosition, ref MyRender11.Environment.Matrices.ViewProjectionAt0, m_ps, m_psPerSample);
+
+
+            RenderAll(m_ps, m_psPerSample);
         }
 
         internal static void RenderEnvProbe(Vector3D cameraPosition, ref Matrix viewProj, uint atmosphereId)
@@ -248,27 +255,43 @@ namespace VRageRender
             RC.SetRtv(null);
         }
 
-        static unsafe void RenderAll(Vector3D cameraPosition, ref Matrix viewProj, 
-            PixelShaderId ps, PixelShaderId psPerSample)
+        static unsafe void RenderAll(PixelShaderId ps, PixelShaderId psPerSample)
         {
-            if(m_atmospheres.Count == 0 || !Enabled)
+            if (m_atmospheres.Count == 0 || !Enabled)
                 return;
-            
+
+            var RC = MyImmediateRC.RC;
             RenderBegin();
 
-            // sort by distance
-            int i = m_atmospheres.Count;
-            var atmospheres = m_atmospheres.OrderByDescending((x) => (x.Value.WorldMatrix.Translation - cameraPosition).LengthSquared());
-            foreach (var atmosphere in atmospheres)
+            // sort by distance.  In theory we need to do this twice in VR mode, but at a planet's scale the IPD isn't really a problem.
+            var atmospheres = m_atmospheres.OrderByDescending((x) => (x.Value.WorldMatrix.Translation - MyRender11.Environment.Matrices.CameraPosition).LengthSquared());
+
+            int nPasses = MyStereoRender.Enable ? 2 : 1;
+            for (int i = 0; i < nPasses; i++)
             {
-                RenderOne(cameraPosition, ref viewProj, ps, psPerSample, atmosphere.Key);
-                i--;
+                if (MyStereoRender.Enable)
+                {
+                    MyStereoRender.RenderRegion = i == 0 ? MyStereoRegion.LEFT : MyStereoRegion.RIGHT;
+                    MyStereoRender.SetViewport(RC);
+                    MyStereoRender.BindRawCB_FrameConstants(RC);
+                }
+
+                var environmentMatrices = MyStereoRender.Enable
+                    ? MyStereoRender.EnvMatricesCurrent
+                    : MyRender11.Environment.Matrices;
+                foreach (var atmosphere in atmospheres)
+                {
+                    RenderOne(environmentMatrices.CameraPosition, ref environmentMatrices.ViewProjectionAt0, ps,
+                        psPerSample, atmosphere.Key);
+                }
             }
 
             RenderEnd();
+            if (MyStereoRender.Enable)
+                MyStereoRender.RenderRegion = MyStereoRegion.FULLSCREEN;
         }
 
-        private static void RenderOne(Vector3D cameraPosition, ref Matrix viewProj, 
+        private static void RenderOne(Vector3D cameraPosition, ref Matrix viewProj,
             PixelShaderId ps, PixelShaderId psPerSample, uint atmosphereId)
         {
             if (!Enabled)
@@ -362,7 +385,7 @@ namespace VRageRender
         {
             var position = atmosphere.WorldMatrix.Translation - cameraPosition;
             double distance = position.Length();
-            double atmosphereTop = atmosphere.AtmosphereRadius * atmosphere.Settings.AtmosphereTopModifier * 
+            double atmosphereTop = atmosphere.AtmosphereRadius * atmosphere.Settings.AtmosphereTopModifier *
                 atmosphere.PlanetScaleFactor * atmosphere.Settings.RayleighTransitionModifier;
             float t = 0.0f;
             if (distance > atmosphereTop)
@@ -375,7 +398,8 @@ namespace VRageRender
                 {
                     t = (float)((distance - atmosphereTop) / atmosphereTop);
                 }
-            } var rayleighHeight = MathHelper.Lerp(atmosphere.Settings.RayleighHeight, atmosphere.Settings.RayleighHeightSpace, t);
+            }
+            var rayleighHeight = MathHelper.Lerp(atmosphere.Settings.RayleighHeight, atmosphere.Settings.RayleighHeightSpace, t);
             return new AtmosphereConstants
             {
                 PlanetCentre = position,

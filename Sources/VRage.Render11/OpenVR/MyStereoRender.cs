@@ -35,7 +35,7 @@ namespace VRageRender
         LEFT,
         RIGHT
     }
-      
+
     class MyStereoRender
     {
         internal static bool Enable { get { return MyRender11.DeviceSettings.UseStereoRendering; } }
@@ -45,6 +45,22 @@ namespace VRageRender
         internal static MyEnvironmentMatrices EnvMatricesRightEye = new MyEnvironmentMatrices();
 
         internal static MyStereoRegion RenderRegion = MyStereoRegion.FULLSCREEN;
+
+        public static MyEnvironmentMatrices EnvMatricesCurrent
+        {
+            get
+            {
+                switch (MyStereoRender.RenderRegion)
+                {
+                    case MyStereoRegion.LEFT:
+                        return EnvMatricesLeftEye;
+                    case MyStereoRegion.RIGHT:
+                        return EnvMatricesRightEye;
+                    default:
+                        return MyRender11.Environment.Matrices;
+                }
+            }
+        }
 
         public static void PSBindRawCB_FrameConstants(MyRenderContext rc)
         {
@@ -75,7 +91,7 @@ namespace VRageRender
             else if (MyStereoRender.RenderRegion == MyStereoRegion.RIGHT)
                 rc.VertexShader.SetConstantBuffer(MyCommon.FRAME_SLOT, MyCommon.FrameConstantsStereoRightEye);
         }
-        
+
         public static void BindRawCB_FrameConstants(MyRenderContext rc)
         {
             if (MyStereoRender.RenderRegion == MyStereoRegion.FULLSCREEN)
@@ -113,7 +129,7 @@ namespace VRageRender
         {
             SetViewport(rc, MyStereoRender.RenderRegion);
         }
-       
+
         private static void BeginDrawGBufferPass(MyRenderContext rc)
         {
             SetViewport(rc, MyStereoRegion.LEFT);
